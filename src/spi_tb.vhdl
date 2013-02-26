@@ -1,37 +1,14 @@
--------------------------------------------------------------------------------
--- This file is part of the Basys2 peripherals project
+--------------------------------------------------------------------------------
+-- This file is part of the "Minimalistic SDHC HOST Reader"
 -- It is distributed under GNU General Public License
--- See at http://www.gnu.org/licenses/gpl.html 
+-- See at http://www.gnu.org/licenses/gpl.html
 -- Copyright (C) 2013 Paulino Ruiz de Clavijo Vázquez <paulino@dte.us.es>
 -- You can get more info at http://www.dte.us.es/id2
 --------------------------------------------------------------------------------
--- Date:     25-02-2013
--- Revision: 0.3
+-- Date:    26-02-2013
+-- Version: 1.0-pre
 --*--------------------------------- End auto header, don't touch this line -*--
 
---*--------------------------------- End auto header, don't touch this line -*--
-
-
--------------------------------------------------------------------------------
--- This file is part of the Basys2 peripherals project
--- It is distributed under GNU General Public License
--- See at http://www.gnu.org/licenses/gpl.html 
--- Copyright (C) 2013 Paulino Ruiz de Clavijo Vázquez <paulino@dte.us.es>
--- You can get more info at http://www.dte.us.es/id2
---------------------------------------------------------------------------------
--- Date:     25-02-2013
--- Revision: 0.3
---*--------------------------------------------------------------------------*--
--------------------------------------------------------------------------------
--- This file is part of the Basys2 peripherals project
--- It is distributed under GNU General Public License
--- See at http://www.gnu.org/licenses/gpl.html 
--- Copyright (C) $YEAR Paulino Ruiz de Clavijo Vázquez <paulino@dte.us.es>
--- You can get more info at $URL
---------------------------------------------------------------------------------
--- Date:     25-02-2013
--- Revision: 0.3
---*--------------------------------------------------------------------------*--
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
@@ -69,7 +46,7 @@ ARCHITECTURE behavior OF spi_tb IS
    signal ss_in : std_logic := '0';
    signal miso : std_logic := '0';
 
- 	--Outputs
+   --Outputs
    signal data_out : std_logic_vector(7 downto 0);
    signal busy : std_logic;
    signal mosi : std_logic;
@@ -82,7 +59,7 @@ ARCHITECTURE behavior OF spi_tb IS
  
 BEGIN
  
-	-- Instantiate the Unit Under Test (UUT)
+  -- Instantiate the Unit Under Test (UUT)
    uut: spi PORT MAP (
           clk => clk,
           data_in => data_in,
@@ -100,22 +77,22 @@ BEGIN
    -- Clock process definitions
    clk_process :process
    begin
-		clk <= '0';
-		wait for clk_period/2;
-		clk <= '1';
-		wait for clk_period/2;
+    clk <= '0';
+    wait for clk_period/2;
+    clk <= '1';
+    wait for clk_period/2;
    end process;
 
    -- Stimulus process
    stim_proc: process
-   begin		
+   begin    
       -- hold reset state for 100 ns.
       miso <= '1';
       data_in <= X"01";
       w_conf  <= '1';
       w_data  <= '0';
       ss_in   <= '1';
-      wait for 100 ns;	
+      wait for 100 ns;  
       w_conf  <= '0';
       w_data  <= '1';
       data_in <= X"99";

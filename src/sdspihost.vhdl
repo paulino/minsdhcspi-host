@@ -1,3 +1,13 @@
+--------------------------------------------------------------------------------
+-- This file is part of the "Minimalistic SDHC HOST Reader"
+-- It is distributed under GNU General Public License
+-- See at http://www.gnu.org/licenses/gpl.html
+-- Copyright (C) 2013 Paulino Ruiz de Clavijo Vázquez <paulino@dte.us.es>
+-- You can get more info at http://www.dte.us.es/id2
+--------------------------------------------------------------------------------
+-- Date:    26-02-2013
+-- Version: 1.0-pre
+--*--------------------------------- End auto header, don't touch this line -*--
 
 
 library IEEE;
@@ -11,43 +21,43 @@ use work.sdspihost_pk.ALL;
 entity sdspihost is
    Port ( 
    clk        : in  std_logic;
-	 reset      : in  std_logic;		  
-	 busy       : out std_logic;
+   reset      : in  std_logic;      
+   busy       : out std_logic;
    err        : out std_logic;
    
    r_block    : in std_logic;
    r_byte     : in std_logic; -- each byte is gotten asserting nb and waiting to fall of busy signal
    block_addr : in std_logic_vector(31 downto 0); -- 512 SD block address
    data_out   : out std_logic_vector(7  downto 0);
-			  
+        
    miso      : in  std_logic;  -- SD Card pin
    mosi      : out std_logic;  -- SD Card pin
    sclk      : out std_logic;  -- SD Card pin
    ss        : out std_logic   -- SD Card pin
-		);
+    );
 end sdspihost;
 
 architecture Behavioral of sdspihost is
 
 
-	component sdcmd
-	 Port (       
-		clk       : in  std_logic;
+  component sdcmd
+   Port (       
+    clk       : in  std_logic;
     reset     : in  std_logic;
     argument  : in  std_logic_vector (31 downto 0);
     data_in   : in  std_logic_vector (7 downto 0); 
-		data_out  : out std_logic_vector (7 downto 0);
+    data_out  : out std_logic_vector (7 downto 0);
     w_cmd     : in  std_logic;
-		w_byte    : in  std_logic;
+    w_byte    : in  std_logic;
     w_arg     : in  std_logic;
-		busy      : out std_logic;
+    busy      : out std_logic;
       
-		miso      : in std_logic;   -- SD Card pin
-		mosi      : out std_logic;  -- SD Card pin
-		sclk      : out std_logic;  -- SD Card pin
-		ss        : out std_logic   -- SD Card pin
-		);
-	end component;
+    miso      : in std_logic;   -- SD Card pin
+    mosi      : out std_logic;  -- SD Card pin
+    sclk      : out std_logic;  -- SD Card pin
+    ss        : out std_logic   -- SD Card pin
+    );
+  end component;
 
 signal sdcmd_reset,sdcmd_w_arg    : std_logic;
 signal sdcmd_w_byte,sdcmd_w_cmd    : std_logic;
@@ -60,46 +70,46 @@ signal counter_dout : std_logic_vector(9 downto 0);
 
 
 type state_type is (
-	ST_INIT_0,ST_INIT_1,
+  ST_INIT_0,ST_INIT_1,
   ST_CMD0_A,ST_CMD0_B,ST_CMD0_C,
-	ST_CMD8_A,ST_CMD8_B,ST_CMD8_C,
-	ST_CMD55_A,ST_CMD55_B,ST_CMD55_C,
-	ST_ACMD41_A,ST_ACMD41_B,ST_ACMD41_C,
-	ST_READ_0,ST_READ_1,ST_READ_2,ST_READ_3,ST_READ_4,
+  ST_CMD8_A,ST_CMD8_B,ST_CMD8_C,
+  ST_CMD55_A,ST_CMD55_B,ST_CMD55_C,
+  ST_ACMD41_A,ST_ACMD41_B,ST_ACMD41_C,
+  ST_READ_0,ST_READ_1,ST_READ_2,ST_READ_3,ST_READ_4,
   ST_ABORTREAD_0,
-	ST_IDLE,ST_ERR
+  ST_IDLE,ST_ERR
    );
-	
+  
 signal current_st,next_st: state_type;
 
 
 begin
 
-	u_sdcmd: sdcmd PORT MAP(
+  u_sdcmd: sdcmd PORT MAP(
     clk       => clk,
     reset     => sdcmd_reset,
     argument  => block_addr,
     data_in   => sdcmd_data_in,
-		data_out  => sdcmd_data_out,
+    data_out  => sdcmd_data_out,
     w_cmd     => sdcmd_w_cmd,
     w_byte    => sdcmd_w_byte,
     w_arg     => sdcmd_w_arg,
-		busy      => sdcmd_busy,
+    busy      => sdcmd_busy,
       
-		miso      => miso,
-		mosi      => mosi,
-		sclk      => sclk,
-		ss        => ss
-	);
+    miso      => miso,
+    mosi      => mosi,
+    sclk      => sclk,
+    ss        => ss
+  );
    
 u_counter: generic_counter   -- 10 bits counter to use
 generic map (width => 10) 
 PORT MAP(
-		clk    =>  clk,
-		reset  =>  counter_reset,
-		up     =>  counter_up,
-		dout   =>  counter_dout
-	);
+    clk    =>  clk,
+    reset  =>  counter_reset,
+    up     =>  counter_up,
+    dout   =>  counter_dout
+  );
    
 
 -- Direct conections
@@ -145,8 +155,8 @@ begin
          next_st <= ST_CMD0_A;
          counter_reset <= '1'; -- Try twice CMD0
        end if;
-	
-	  -- Send CMD0  
+  
+    -- Send CMD0  
      when ST_CMD0_A =>
        busy <= '1';
        sdcmd_data_in <=  CMD0_ROMADDR;
@@ -171,7 +181,7 @@ begin
            next_st <= ST_CMD0_A; -- try again
          end if;
        end if;
-		 
+     
      -- Send CMD8
      when ST_CMD8_A =>  
        busy <= '1';
@@ -218,7 +228,7 @@ begin
        if sdcmd_data_out = X"FF" then
          next_st <= ST_CMD55_A;
        elsif sdcmd_data_out = X"01" then
-		   next_st <= ST_ACMD41_A; -- try init card
+       next_st <= ST_ACMD41_A; -- try init card
        else
          next_st <= ST_ERR;
        end if;
@@ -238,30 +248,30 @@ begin
        end if;
      when ST_ACMD41_C => 
        busy <='1';
-		   counter_reset <= '1';  --  if try CMD55 again need it
+       counter_reset <= '1';  --  if try CMD55 again need it
        if sdcmd_data_out = X"00" then -- Init ends
         next_st <= ST_IDLE;         
        elsif sdcmd_data_out = X"01" then -- Init not ends, card is idle
         next_st <= ST_CMD55_A; -- try again 
-		 else
+     else
          next_st <= ST_ERR;
        end if;
        
-	 when ST_IDLE => -- Wait for read block
+   when ST_IDLE => -- Wait for read block
         if r_block = '1' then
           next_st <= ST_READ_0;
         else
           next_st <= ST_IDLE;
         end if;
  
-		  
-	 when ST_READ_0 =>
+      
+   when ST_READ_0 =>
       busy <= '1';
-		  counter_reset <= '1';
-		  sdcmd_data_in <=  X"51"; -- CMD17 with argument (read block)
+      counter_reset <= '1';
+      sdcmd_data_in <=  X"51"; -- CMD17 with argument (read block)
       sdcmd_w_cmd   <= '1';  -- CMD
       sdcmd_w_arg   <= '1'; -- Send 6 bytes command: data_in&argument&0x00 
-		  next_st <= ST_READ_1;
+      next_st <= ST_READ_1;
       
     when ST_READ_1 => -- Wait response 00 sending FF while not timeout
       busy <= '1';
@@ -270,7 +280,7 @@ begin
       if sdcmd_busy = '1' then
         next_st <= ST_READ_1;
        else
-		     counter_up <='1';
+         counter_up <='1';
          if sdcmd_data_out = X"00" then -- Command OK
            counter_reset <= '1';
            sdcmd_data_in <= X"00"; -- Send 00
@@ -279,13 +289,13 @@ begin
          elsif counter_dout(7 downto 0) = X"FF" then -- Time out
            next_st <= ST_ERR; 
          else
-		       sdcmd_w_cmd  <= '1'; -- Try again sending FF
+           sdcmd_w_cmd  <= '1'; -- Try again sending FF
            next_st <= ST_READ_1;
          end if;
-	    end if;
-		 
+      end if;
+     
     when ST_READ_2 => -- Now wait start token FE sending 0x00, after it data can be retrieved
-	    busy <= '1';
+      busy <= '1';
       sdcmd_w_byte  <= '1'; -- Sending bytes after command
       sdcmd_data_in <= X"00"; -- sending 00
       if sdcmd_busy = '1' then
@@ -324,15 +334,14 @@ begin
          next_st <= ST_READ_4;
       else
          next_st <= ST_READ_3; -- Next byte
-		  end if;
+      end if;
       
     when ST_ABORTREAD_0 =>
       busy <= '1';
       sdcmd_w_byte  <= '1'; -- Sending bytes after command
       if sdcmd_busy = '1' then
         next_st <= ST_ABORTREAD_0;
-      else
-        
+      else       
         if counter_dout = "1000000001" then        
           next_st <= ST_IDLE;
         else
@@ -343,7 +352,7 @@ begin
         end if;          
       end if;
       
-       		  
+             
     when ST_ERR =>
        err <= '1';
        next_st <= ST_ERR;

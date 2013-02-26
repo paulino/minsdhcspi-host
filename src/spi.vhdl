@@ -1,3 +1,13 @@
+--------------------------------------------------------------------------------
+-- This file is part of the "Minimalistic SDHC HOST Reader"
+-- It is distributed under GNU General Public License
+-- See at http://www.gnu.org/licenses/gpl.html
+-- Copyright (C) 2013 Paulino Ruiz de Clavijo Vázquez <paulino@dte.us.es>
+-- You can get more info at http://www.dte.us.es/id2
+--------------------------------------------------------------------------------
+-- Date:    26-02-2013
+-- Version: 1.0-pre
+--*--------------------------------- End auto header, don't touch this line -*--
 -------------------------------------------------------------------------------
 
 -- NOTES:
