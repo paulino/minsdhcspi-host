@@ -14,14 +14,21 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use work.sdspihost_pk.ALL;
 
+
+use std.textio.all;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+
+
 -- Some notes
+-- When error is detected, err signal is asserted until the unit is reset
 -- Abort read is not implemented with CMD12..
 
 
 entity sdspihost is
    Port ( 
    clk        : in  std_logic;
-   reset      : in  std_logic;      
+   reset      : in  std_logic;
    busy       : out std_logic;
    err        : out std_logic;
    
@@ -85,7 +92,7 @@ signal current_st,next_st: state_type;
 
 begin
 
-  u_sdcmd: sdcmd PORT MAP(
+  u_sdcmd: sdcmd port map(
     clk       => clk,
     reset     => sdcmd_reset,
     argument  => block_addr,
@@ -104,7 +111,7 @@ begin
    
 u_counter: generic_counter   -- 10 bits counter to use
 generic map (width => 10) 
-PORT MAP(
+port map(
     clk    =>  clk,
     reset  =>  counter_reset,
     up     =>  counter_up,
@@ -143,10 +150,14 @@ begin
   counter_up    <= '0';  
   
   case current_st is
-     when ST_INIT_0 =>  -- Reset SDCMD module
-       sdcmd_reset <= '1';
-       busy <= '1';
-       next_st <= ST_INIT_1;
+     when ST_INIT_0 =>     -- Reset SDCMD module
+       sdcmd_reset <= '1'; -- Keep stopped
+       busy <= '0';
+       if r_block = '1' then
+         next_st <= ST_INIT_1;
+       else
+         next_st <= ST_INIT_0;
+       end if;
      when ST_INIT_1 =>  -- Wait for reset
        busy <= '1';
        if sdcmd_busy='1' then
@@ -360,4 +371,3 @@ begin
 end process;
 
 end Behavioral;
-
