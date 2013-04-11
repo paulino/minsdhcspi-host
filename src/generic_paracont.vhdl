@@ -5,8 +5,9 @@
 -- Copyright (C) 2013 Paulino Ruiz de Clavijo Vázquez <paulino@dte.us.es>
 -- You can get more info at http://www.dte.us.es/id2
 --------------------------------------------------------------------------------
--- Date:    26-02-2013
--- Version: 1.0-pre
+-- Date:    11-04-2013
+-- Version: 1.1
+
 --*--------------------------------- End auto header, don't touch this line -*--
 
 -- Generic counter with parallel load
