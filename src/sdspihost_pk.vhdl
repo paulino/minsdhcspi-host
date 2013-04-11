@@ -30,42 +30,63 @@ constant CMD12_ROMADDR  : std_logic_vector(7 downto 0) := X"18";
 
 -- Components
 
-COMPONENT generic_counter
-generic ( width : integer );      
-PORT(
-		clk : IN std_logic;
-		reset : IN std_logic;
-		up : IN std_logic;          
-		dout : OUT std_logic_vector(width-1 downto 0)
-		);
-END COMPONENT;
+component sdspihost
+   port(
+   clk        : in  std_logic;
+   reset      : in  std_logic;      
+   busy       : out std_logic;
+   err        : out std_logic;
+   
+   r_block    : in std_logic;
+   r_byte     : in std_logic; 
+   block_addr : in std_logic_vector(31 downto 0); -- 512 sd block address
+   data_out   : out std_logic_vector (7 downto 0);
+        
+   miso      : in  std_logic;  -- sd card pin
+   mosi      : out std_logic;  -- sd card pin
+   sclk      : out std_logic;  -- sd card pin
+   ss        : out std_logic   -- sd card pin
+    );
+  end component;
 
-COMPONENT generic_paracont
+
+component generic_counter
 generic ( width : integer );      
-PORT(
-		clk : IN std_logic;
-		reset : IN std_logic;
-		up : IN std_logic;
-		load : IN std_logic;
-		din : IN std_logic_vector(width-1 downto 0);          
-		dout : OUT std_logic_vector(width-1 downto 0)
+port(
+		clk : in std_logic;
+		reset : in std_logic;
+		up : in std_logic;          
+		dout : out std_logic_vector(width-1 downto 0)
 		);
-END COMPONENT;
+end component;
+
+component generic_paracont
+generic ( width : integer );      
+port(
+		clk   : in std_logic;
+		reset : in std_logic;
+		up    : in std_logic;
+		load  : in std_logic;
+		din   : in std_logic_vector(width-1 downto 0);          
+		dout  : out std_logic_vector(width-1 downto 0)
+		);
+end component;
 
 component spi
-    Port ( clk      : in   std_logic;
-           data_in  : in   std_logic_vector (7 downto 0);
-			  data_out : out  std_logic_vector (7 downto 0);
-			  w_data   : in   std_logic; 	-- 0: read / 1: write
-           w_conf   : in   std_logic;   -- 1: write_config, 0: write data
-           ss_in    : in   std_logic;    -- SPI SS            
+    Port (
+      clk      : in   std_logic;
+      data_in  : in   std_logic_vector (7 downto 0);
+			data_out : out  std_logic_vector (7 downto 0);
+			w_data   : in   std_logic; 	-- 0: read / 1: write
+      w_conf   : in   std_logic;  -- 1: write_config, 0: write data
+      ss_in    : in   std_logic;  -- SPI SS            
            
-           busy    : out   std_logic;   -- Data ready when not busy
+      busy    : out   std_logic;  -- Data ready when not busy
            
-			  miso    : in    std_logic;    -- SPI external connections 
-			  mosi    : out   std_logic;
-			  sclk    : out   std_logic;
-			  ss      : out   std_logic);
+			miso    : in    std_logic;  -- SPI external connections 
+			mosi    : out   std_logic;
+			sclk    : out   std_logic;
+			ss      : out   std_logic);
 end component;
 
 component sdcmd_rom
@@ -80,5 +101,4 @@ end sdspihost_pk;
 package body sdspihost_pk is
 
 
- 
 end sdspihost_pk;
