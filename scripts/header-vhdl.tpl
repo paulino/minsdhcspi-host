@@ -1,9 +1,0 @@
---------------------------------------------------------------------------------
--- This file is part of the "Minimalistic SDHC HOST Reader"
--- It is distributed under GNU General Public License
--- See at http://www.gnu.org/licenses/gpl.html
--- Copyright (C) $YEAR $AUTHOR
--- You can get more info at $URL
---------------------------------------------------------------------------------
--- Date:    $DATE
--- Version: $REVISION

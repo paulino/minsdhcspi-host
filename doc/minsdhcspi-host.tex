@@ -1,0 +1,301 @@
+\documentclass[oneside]{article}
+
+
+\errorcontextlines 10000
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{minted}   % VHDL Code
+\usepackage[numbers]{natbib}   % Biblio
+
+\usepackage[a4paper,left=2cm,right=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.75em}
+
+%%% Vars, re-use some texts
+\newcommand{\pVersion}{v1.1}
+\newcommand{\pTitle}{Minimalistic SDHC-SPI Host Reader}
+%%%
+
+%%% set header and footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{ \pTitle \hspace{}  \pVersion}
+\rhead{ Paulino Ruiz-de-Clavijo Vázquez }
+\renewcommand{\footrulewidth}{0.4pt} % default is 0pt
+\lfoot{Dept. Tecnología Electrónica, Universidad de Sevilla}
+\cfoot{}
+\rfoot{\thepage}
+
+
+
+\renewcommand*{\arraystretch}{1.3}
+
+\title{\pTitle}
+\author{Paulino Ruiz-de-Clavijo V\'azquez \\ 
+\emph{Departamento de Tecnología Electrónica, Universidad de Sevilla} }
+\date{April, 2017 \pVersion}
+
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+
+\begin{figure}[h]
+\centering
+\includegraphics{figure-top-module}
+\caption{Top view module}
+\label{fig-top}
+\end{figure}
+
+MinSDHC-SPI Host is an IP core written in VHDL that implements the SD card 
+protocol using Finite State Machines (FSM). It is has been designed to use a 
+low resources but losing some performance compared with other solutions. 
+The implementation uses SD SPI mode 
+and a minimal set of SD commands to initialize and read SD cards.
+
+\section*{Features}
+
+The module performs two operations: SD card initialization and blocks read. 
+SD card initialization is auto-triggered when the \emph{reset} signal
+is de-asserted (set to 0). Read operation is controller by signals 
+\emph{r\_block} and \emph{r\_byte}. This implementation uses the minimal set of 
+CMD  commands, therefore the CMD12 is not used and the read process is aborted 
+waiting for all block bytes. The read operation is performed in the single block 
+mode.
+
+Main features are:
+
+\begin{itemize}
+\item Only SDHC cards are supported
+\item Programmable SPI pre-scaler
+\item Picoblaze interface
+\item Alternative architecture in VDHL for simulation purpose
+\end{itemize}
+
+The main purpose of this implementation is to achieve low footprint, 
+sacrificing performance, the table \ref{tab-resources} show results for some
+Xilinx's FPGAs.
+
+\begin{table}[ht]
+\renewcommand*{\arraystretch}{1.3}
+\centering
+\begin{tabular}{ | l c c c c | }
+\hline
+  \bfseries FPGA & \bfseries Slices &
+  \bfseries Slices Reg. & \bfseries LUTs & \bfseries Slices (\%) \\
+ \hline
+  Spartan-3 - XC3S100E & 179 &  111 &  270 & 18.6\%  \\ 
+  Virtex-5 - XC5VLX50T & 116 &  111 &  211 &  1.61\% \\ 
+  Artix-7 - XC7A35T    &  63 &   88 &  211 &  0.77\% \\ 
+ \hline
+\end{tabular}
+\caption{Resources utilization for some Xilinx's FPGAs}
+\label{tab-resources}
+\end{table}
+
+\section*{Functional description and I/O signals}
+
+The Figure \ref{fig-top} presents the I/O interface signals, 
+they are described in Table \ref{tab_signals}. 
+
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ | l c l | } 
+ \hline
+  \bfseries Signal & \bfseries Direc. & \bfseries Description \\
+  reset  & input & Reset / SD Card Initialization trigger  \\ %%
+  clk50m & input & 50MHz input clock \\ %%
+  addr[31:0] & input & 32-bit SD card block address to be read  \\
+  r\_block & input & Reads a new block addressed by addr[31:0]  \\
+  r\_byte &  input & Gets next byte of the current block \\
+  dout[7:0] &  output & Output data bus \\
+  busy & output & Operation running indicator \\
+  err & output & Error condition indicator \\
+  \hline  
+\end{tabular}
+\caption{Core I/O signals}
+\label{tab_signals}
+\end{table}
+
+SD card initialization is auto-triggered when the \emph{reset} signal 
+is de-asserted (set to 0). The Figure \ref{fig-init} contains a timing diagram 
+with the initialization sequence.  In the Figure the \emph{busy} 
+signal keeps asserted while the initialization process is not finished. This 
+operation is completed when \emph{busy} signal falls, 
+on error (card is not present or not supported) \emph{err} signal is asserted. 
+
+\begin{figure}[H]
+\centering
+\includegraphics{figure-init}
+\caption{Top view module}
+\label{fig-init}
+\end{figure}
+
+Once the initialization process success, the read operation is performed 
+setting the SD block number at \emph{addr} bus and asserting the signal 
+\emph{r\_block}. The module behavior is similar to the initialization process,
+while the block is not ready, the \emph{busy} signal keeps asserted. After
+\emph{busy} fall, if \emph{err} is asserted an error happened otherwise,
+the first byte of the 512-byte block is ready in \emph{dout} bus. The 
+next 511 bytes are gotten asserting the \emph{r\_byte} signal 511 times as is
+shown in the timing diagram of the Figure \ref{fig-readblock}.
+
+The block read operation can be interrupted at any time by de-asserting the
+\emph{r\_block} signal.
+
+\begin{figure}[H]
+\centering
+\includegraphics{figure-readblock}
+\caption{Read block operation}
+\label{fig-readblock}
+\end{figure}
+
+The following examples shows how the module can be controlled from a FSM 
+written in VHDL. The full VHDL code for the examples are is available in the 
+examples directory.
+
+The first example shows the initialization process controlled by another FSM 
+using two states. The following VHDL code  starts resetting the module and wait 
+until the SD card is ready or an error happens. 
+
+\begin{minted}[frame=single]{vhdl}
+    when ST_INIT_SD =>             -- Wait SDHOST INIT
+      sdhost_reset <= '1';
+      next_st <= ST_WAIT_SD_READY;
+
+    when ST_WAIT_SD_READY =>       -- Wait for SDHOST ready
+      sdhost_reset <= '0';
+      if sdhost_busy= '1' then 
+        next_st <= ST_WAIT_SD_READY;
+      elsif sdhost_err='1' then 
+        next_st <= ST_SD_INIT_ERR;
+      else
+        next_st <= ST_SD_INIT_DONE;
+      end if;
+\end{minted}
+
+The next example is a one block read operation and it is achieved using three 
+states. A counter is added to detect when the 512 bytes of the block are read.
+
+\begin{minted}[frame=single]{vhdl}
+     when ST_READ_BLOCK =>
+       sdhost_r_block <= '1';     -- Read block
+       next_st        <= ST_WAIT_BYTE;
+
+     when ST_WAIT_BYTE =>         -- Wait for a byte ready
+       sdhost_r_block <= '1';     -- Mandatory keep signal asserted
+       if sdhost_busy= '1' then 
+         next_st <= ST_WAIT_BYTE;
+       elsif sdhost_err='1' then 
+         next_st <= ST_ERR;
+       else                      
+         ...                      -- Byte ready, do something ...
+         next_st <= ST_LOOP;
+       end if;
+
+      when ST_LOOP =>             -- Loop to read 512 bytes from SD card.
+        sdhost_r_block  <= '1';   -- Keep asserted to get 
+                                  -- other byte on same block
+        if (byte_counter = b"111111111") then -- 512 bytes read
+          next_st <= ST_END_BLOCK;
+        else
+          byte_counter_up <= '1'; -- byte_counter = byte_counter + 1;
+          sdhost_r_byte   <= '1'; -- r_byte pulse to get other byte
+          next_st         <= ST_WAIT_BYTE;
+        end if;
+\end{minted}
+
+
+\section*{Picoblaze-3 interface}
+
+An example with the module connected as a peripheral to Picoblaze-3 
+(KCPSM3 \cite{picoblaze.2011}) 
+microcontroller is supplied.  It allow read SD cards with smalls pieces of 
+Picoblaze assembler code. Although an SD card can be controlled from Picoblaze 
+adding an SPI peripheral, the code required spends a lot of program code due 
+Picoblaze-3 has only 1024-instructions for program code available.
+
+The file \emph{rtl/if\_picoblaze.vhdl} contains an example with
+the glue logic for Picoblaze-3. The proposed logic uses one output port of 
+Picoblaze and two  input ports.
+Writing a byte in the out port, an operation of the table 
+\ref{tab-pico-outport} is triggered. The operation 0x01 need a 4-byte argument,
+the SD card block (32-bit number). This argument must be sent after 0x01 with 4 
+writings in this port. The two input ports are selected by \emph{addr}.
+
+This example has some issues like the absence of reset operation, but it can be 
+done by adding the module reset signal to some port. It will improve in future 
+version using the KCPSM6.
+
+
+
+\begin{table}[htp]
+
+\centering
+\begin{tabular}{ | c l | }
+\hline
+  \bfseries Value & \bfseries Description \\
+ \hline
+  0x01 & Send the 32-bit address, after this byte 4 bytes more are expected with 
+the SD card block address \\
+  0x02 & Starts a read for the block address received with the command 0x01 \\
+  0x04 & Reads the next byte of the current block \\
+ \hline
+\end{tabular}
+\caption{Write port operation}
+\label{tab-pico-outport}
+\end{table}
+
+
+\begin{table}[htp]
+\centering
+\begin{tabular}{ | c l | }
+\hline
+  \bfseries addr & \bfseries Description \\
+ \hline
+  0 &  Read status register\\
+  1 &  Read SDHC-SPI byte out\\
+ \hline
+\end{tabular}
+\caption{Read port operations}
+\label{tab-read-operations}
+\end{table}
+
+\begin{table}[htp]
+
+\centering
+\begin{tabular}{ | c | c | c | c | c | c | c | c |}
+\hline
+  \bfseries bit 7 & \bfseries bit 6 & 
+  \bfseries bit 5 & \bfseries bit 4 & \bfseries bit 3 &
+  \bfseries bit 2 & \bfseries bit 1 & \bfseries bit 0 \\
+ \hline
+  - & - & - & - & - & 
+  sdhost\_busy &  sdhost\_err & byte\_ready  \\
+ \hline
+\end{tabular}
+\caption{Status register}
+\label{tab-status-register}
+\end{table}
+
+
+
+\begin{thebibliography}{1}
+
+\bibitem{picoblaze.2011}
+Xilinx Inc., PicoBlaze 8-bit Embedded Microcontroller User Guide for 
+Extended
+  Spartan-3 and Virtex-5 FPGAs. Introducing PicoBlaze for Spartan-6,Virtex-6,
+  and 7 Series FPGAs (2011).
+ 
+\end{thebibliography}
+
+
+
+\end{document}

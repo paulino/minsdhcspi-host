@@ -1,0 +1,10 @@
+--------------------------------------------------------------------------------
+-- This file is part of the 'Minimalistic SDHC Host Reader'
+-- Copyright (C) $YEAR $AUTHOR
+-- Licensed under the Apache License 2.0, you may obtain a copy of 
+-- the License at https://www.apache.org/licenses/LICENSE-2.0
+--
+-- You can get more info at $URL
+--------------------------------------------------------------------------------
+-- Date:    $DATE
+-- Version: $REVISION

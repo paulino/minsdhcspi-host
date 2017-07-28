@@ -1,0 +1,6 @@
+[submodule "examples/digilentinc-peripherals"]
+	path = examples/digilentinc-peripherals
+	url = https://github.com/paulino/digilentinc-peripherals.git
+[submodule "examples/submodules/digilentinc-peripherals"]
+	path = examples/submodules/digilentinc-peripherals
+	url = https://github.com/paulino/digilentinc-peripherals.git
